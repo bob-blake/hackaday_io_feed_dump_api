@@ -1,6 +1,7 @@
 <?php
 // dump.php
 // Dumps metadata from hackaday.io global feed items to database.  Uses Hackaday.io API.
+//
 // Author: Bob Blake
 // Date: May 5, 2015
 
@@ -13,10 +14,10 @@ $pagenum = 1;
 $server = mysql_connect(DB_HOST,DB_USER,DB_PASS);
 $dbcnx = @mysql_select_db(DB_NAME);
 
-echo "<html>
-      <head></head>
-      <body>
-        <p>";
+// echo "<html>
+//       <head></head>
+//       <body>
+//         <p>";
 
     $num_pages = 2;
     $page = 1;
@@ -28,6 +29,7 @@ echo "<html>
       if(!$data){ // Probably means I hit the API limit
         $file = 'errors.txt';
         $message = "Error occurred at " . gmdate("Y-m-d H:i:s",time()) . ", page $page not processed.\r";
+        //echo $message;
         file_put_contents($file, $message, FILE_APPEND | LOCK_EX);
         break;
       }
@@ -88,7 +90,7 @@ echo "<html>
       $num_pages = $data["last_page"];
    }
    
-echo "      </p>
-      </body>
-      </html>";
+// echo "      </p>
+//       </body>
+//       </html>";
 ?>
