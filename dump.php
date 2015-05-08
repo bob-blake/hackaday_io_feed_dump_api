@@ -12,9 +12,6 @@
 
 require("../../php/had_feed/vars.php");
 
-$finished = 0;
-$pagenum = 1;
-
 // This is deprecated, I know I know
 $server = mysql_connect(DB_HOST,DB_USER,DB_PASS);
 $dbcnx = @mysql_select_db(DB_NAME);
