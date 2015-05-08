@@ -13,19 +13,58 @@
 
 require("../../php/had_feed/vars.php");
 
-function is_duplicate($item){
-   $query = "SELECT * FROM feed_items_api WHERE item_id='$item'";
-   $result = mysql_query($query);
-   if(!$result){
+class feedItem
+{
+  public $item_id;
+  public $user_id;
+  public $project_id;
+  public $user2_id;
+  public $post_id;
+  public $type;
+  public $activity;
+  public $date_time;
+  public $is_duplicate;
+
+  public function __construct($feed_item_arr){
+    $this->item_id = $feed_item_arr["id"];
+    $this->user_id = $feed_item_arr["user_id"];
+    $this->project_id = $feed_item_arr["project_id"];
+    $this->user2_id = $feed_item_arr["user2_id"];
+    $this->post_id = $feed_item_arr["post_id"];
+    $this->type = $feed_item_arr["type"];
+    $this->activity = $feed_item_arr["activity"];
+    $this->date_time = gmdate("Y-m-d H:i:s", $feed_item_arr["created"]);
+    $this->is_duplicate = 0;
+  }
+
+  public function is_duplicate(){
+    $query = "SELECT * FROM feed_items_api WHERE item_id='$this->item_id'";
+    $result = mysql_query($query);
+    if(!$result){
       echo mysql_error();  // Or handle otherwise, return an error code
       die();
-   }
-   $num_rows = mysql_num_rows($result);
-   if($num_rows > 0)
+    }
+    $num_rows = mysql_num_rows($result);
+    if($num_rows > 0)
       return 1;
-   else
+    else
       return 0;
+  }
+
+  public function print_to_screen(){
+    echo "Item ID: $this->item_id <br />";
+    echo "User ID: $this->user_id <br />";
+    echo "Project ID: $this->project_id <br />";
+    echo "User2 ID: $this->user2_id <br />";
+    echo "Post ID: $this->post_id <br />";
+    echo "Post Type: $this->type <br />";
+    echo "Activity: $this->activity <br />";
+    echo "Date/Time: $this->date_time <br />";
+    echo "Duplicate?: $this->is_duplicate <br />";
+    echo "<br />";
+  }
 }
+
 
 
 $api_hits = 0;
@@ -68,18 +107,20 @@ echo "<html>
       foreach($data["feeds"] as $feed_item){
          
         // Put array data into variables for legibility
-        $item_id = $feed_item["id"];
-        $user_id = $feed_item["user_id"];
-        $project_id = $feed_item["project_id"];
-        $user2_id = $feed_item["user2_id"];
-        $post_id = $feed_item["post_id"];
-        $type = $feed_item["type"];
-        $activity = $feed_item["activity"];
-        $date_time = gmdate("Y-m-d H:i:s", $feed_item["created"]);
-        $is_duplicate = 0;
+        // $item_id = $feed_item["id"];
+        // $user_id = $feed_item["user_id"];
+        // $project_id = $feed_item["project_id"];
+        // $user2_id = $feed_item["user2_id"];
+        // $post_id = $feed_item["post_id"];
+        // $type = $feed_item["type"];
+        // $activity = $feed_item["activity"];
+        // $date_time = gmdate("Y-m-d H:i:s", $feed_item["created"]);
+        // $is_duplicate = 0;
+        $item = new feedItem($feed_item);
 
         // Mark duplicates
-        if(is_duplicate($item_id)){
+        //if(is_duplicate($item_id)){
+        if($item->is_duplicate()){
           $is_duplicate = 1;
           $dupl_cntr++;
           if($dupl_cntr >= 50){ // 50 in a row probably means we've already gotten these items
@@ -103,16 +144,18 @@ echo "<html>
         $dupl_cntr = 0; // If we get here, reset counter
 
         // Output to screen for testing
-        echo "Item ID: $item_id <br />";
-        echo "User ID: $user_id <br />";
-        echo "Project ID: $project_id <br />";
-        echo "User2 ID: $user2_id <br />";
-        echo "Post ID: $post_id <br />";
-        echo "Post Type: $type <br />";
-        echo "Activity: $activity <br />";
-        echo "Date/Time: $date_time <br />";
-        echo "Duplicate?: $is_duplicate <br />";
-        echo "<br />";
+        // echo "Item ID: $item_id <br />";
+        // echo "User ID: $user_id <br />";
+        // echo "Project ID: $project_id <br />";
+        // echo "User2 ID: $user2_id <br />";
+        // echo "Post ID: $post_id <br />";
+        // echo "Post Type: $type <br />";
+        // echo "Activity: $activity <br />";
+        // echo "Date/Time: $date_time <br />";
+        // echo "Duplicate?: $is_duplicate <br />";
+        // echo "<br />";
+
+        $item->print_to_screen();
          
          // Put data into database
           // $query = "INSERT INTO feed_items_api (item_id, user_id, project_id, user2_id, post_id, post_type, activity, date_time, is_duplicate) 
