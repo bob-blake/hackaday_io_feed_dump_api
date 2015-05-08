@@ -13,6 +13,21 @@
 
 require("../../php/had_feed/vars.php");
 
+function is_duplicate($item){
+   $query = "SELECT * FROM feed_items_api WHERE item_id='$item'";
+   $result = mysql_query($query);
+   if(!$result){
+      echo mysql_error();  // Or handle otherwise, return an error code
+      die();
+   }
+   $num_rows = mysql_num_rows($result);
+   if($num_rows > 0)
+      return 1;
+   else
+      return 0;
+}
+
+
 $api_hits = 0;
 $new_cntr = 1;
 
@@ -64,15 +79,11 @@ echo "<html>
         $is_duplicate = 0;
 
         // Mark duplicates
-        $query = "SELECT * FROM feed_items_api WHERE item_id='$item_id'";
-        $result = mysql_query($query);
-        if(!$result)
-          echo mysql_error();
-        $num_rows = mysql_num_rows($result);
-        if($num_rows > 0){
+        if(is_duplicate($item_id)){
           $is_duplicate = 1;
           $dupl_cntr++;
           if($dupl_cntr >= 50){ // 50 in a row probably means we've already gotten these items
+            $dupl_cntr = 0;
             $query = "SELECT COUNT(id) FROM feed_items_api";
             $result = mysql_query($query);
             if(!$result)
