@@ -4,6 +4,11 @@
 //
 // Author: Bob Blake
 // Date: May 5, 2015
+// TODO: Make it so this code adds new post items if they appear; also old post items if they're not yet
+// in the database.
+//    Start at page 1, read in new posts until a duplicate is found
+//    Then, count the number of entires in the database and divide by 50
+//    This will give the next page where un-dumped old data has appeared
 
 require("../../php/had_feed/vars.php");
 
@@ -31,7 +36,7 @@ $dbcnx = @mysql_select_db(DB_NAME);
         $message = "Error occurred at " . gmdate("Y-m-d H:i:s",time()) . ", page $page not processed.\r";
         //echo $message;
         file_put_contents($file, $message, FILE_APPEND | LOCK_EX);
-        break;
+        return;
       }
      
       // Cycle through feed items on each page
