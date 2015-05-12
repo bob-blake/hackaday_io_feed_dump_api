@@ -24,6 +24,12 @@ class feedItem
   public $activity;
   public $date_time;
 
+  private $table_name;
+
+  public function __construct($table){
+    $this->table_name = $table;
+  }
+
   public function get_current($feed_item_arr){
     $this->item_id = $feed_item_arr["id"];
     $this->user_id = $feed_item_arr["user_id"];
@@ -37,7 +43,7 @@ class feedItem
   }
   
   public function is_duplicate(){
-    $query = "SELECT * FROM feed_items_api WHERE item_id='$this->item_id'";
+    $query = "SELECT * FROM $this->table_name WHERE item_id='$this->item_id'";
     $result = mysql_query($query);
     if(!$result){
       echo mysql_error();  // Or handle otherwise, return an error code
@@ -62,11 +68,9 @@ class feedItem
     echo "<br />";
   }
 
-  // TODO: Test this function!
-  public function insert_into_table($table){
-    $query = "INSERT INTO $table (item_id, user_id, project_id, user2_id, post_id, post_type, activity, date_time) 
+  public function insert_into_table(){
+    $query = "INSERT INTO $this->table_name (item_id, user_id, project_id, user2_id, post_id, post_type, activity, date_time) 
                  VALUES ('$this->item_id', '$this->user_id', '$this->project_id', '$this->user2_id', '$this->post_id', '$this->type', '$this->activity', '$this->date_time')";
-
     $result = mysql_query($query);
 
     $err = mysql_error();
@@ -85,7 +89,8 @@ function getNewPage($key,$pagenum){
   return json_decode($json,true);
 }
 
-$api_safety_limit = 2;	  // Limit number of hits to API so my key doesn't get locked out
+$db_table = "feed_items_test2";
+$api_safety_limit = 3;	  // Limit number of hits to API so my key doesn't get locked out
 $first_page = 1;          // Set this to values other than 1 for debug
 $page_num = $first_page;
 $num_pages = $page_num;   // Ensure we always get at least one page
@@ -93,7 +98,7 @@ $num_pages = $page_num;   // Ensure we always get at least one page
 $api_hit_cntr = 0;
 $dupl_cntr = 0;
 
-$item = new feedItem();
+$item = new feedItem($db_table);
 
 // This is deprecated, I know I know
 $server = mysql_connect(DB_HOST,DB_USER,DB_PASS);
@@ -133,15 +138,15 @@ echo "<html>
 
         if($item->is_duplicate()){
 
-          if($dupl_cntr < 50){
-            $dupl_cntr++;
+          if(++$dupl_cntr < 50){
+            echo "Duplicate #$dupl_cntr<br />";
             continue; // Move on to next post
           }
           else{   // 50 in a row probably means we've already gotten these items, so try to get more data from the end
             $dupl_cntr = 0;     // Reset counter
 
             // Count all items in table
-            $query = "SELECT COUNT(id) FROM feed_items_api";
+            $query = "SELECT COUNT(id) FROM $db_table";
             $result = mysql_query($query);
             if(!$result){
               echo mysql_error();
@@ -150,16 +155,16 @@ echo "<html>
             echo "Count: $count<br />";
             
             // Continue getting posts from the end
-            $page_num += floor(($count) / 50) - 1; 
+            $page_num = floor(($count) / 50); // This gets incremented before being used
             break;  // Move on to next page
           }
         }
+        else{
+          $dupl_cntr = 0; // If we get here, reset counter
 
-        $dupl_cntr = 0; // If we get here, reset counter
-
-        $item->print_to_screen();
-        //$item->insert_into_table("feed_items_test");
-        //$item->insert_into_table("feed_items_api");
+          $item->print_to_screen();
+          $item->insert_into_table();
+        }
       }
       
       // Increment page
