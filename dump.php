@@ -157,7 +157,7 @@ $dbcnx = @mysql_select_db(DB_NAME);
         else{
           $dupl_cntr = 0; // If we get here, reset counter
 
-          $item->print_to_screen();
+          //$item->print_to_screen();
           $item->insert_into_table();
         }
       }
