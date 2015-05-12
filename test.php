@@ -144,6 +144,7 @@ echo "<html>
             $result = mysql_query($query);
             if(!$result){
               echo mysql_error();
+              return;
             }
             $count = mysql_result($result,0);   
             echo "Count: $count<br />";
