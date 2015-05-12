@@ -1,15 +1,9 @@
 <?php
 // dump.php
 // Gets metadata from hackaday.io global feed items and displays on screen.  Uses Hackaday.io API.
-// Same methods as dump.php, but doesn't save to database and doesn't load entire feed.
+// This file is just used to test functionality of dump.php.
 // Author: Bob Blake
 // Date: May 5, 2015
-
-// TODO: Make it so this code adds new post items if they appear; also old post items if they're not yet
-// in the database.
-//    Start at page 1, read in new posts until a duplicate is found
-//    Then, count the number of entires in the database and divide by 50
-//    This will give the next page where un-dumped old data has appeared
 
 require("../../php/had_feed/vars.php");
 
@@ -119,7 +113,7 @@ echo "<html>
       $api_hit_cntr++;
 
       // Get a new page
-      $data = getNewPage($api_key,$page_num);	
+      $data = getNewPage($api_key_test,$page_num);	
       if(!data){  // Probably means we hit the hackaday API limit
         $file = 'errors.txt';
         $message = "Error occurred at " . gmdate("Y-m-d H:i:s",time()) . ", page $page_num not processed.  Hit counter: $api_hit_cntr\r";
