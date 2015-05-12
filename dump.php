@@ -57,14 +57,16 @@ class feedItem
     echo "User2 ID: $this->user2_id <br />";
     echo "Post ID: $this->post_id <br />";
     echo "Post Type: $this->type <br />";
-    echo "Activity: $this->activity <br />";
+    //echo "Activity: $this->activity <br />";
     echo "Date/Time: $this->date_time <br />";
     echo "<br />";
   }
 
   public function insert_into_table(){
-    $query = "INSERT INTO $this->table_name (item_id, user_id, project_id, user2_id, post_id, post_type, activity, date_time) 
-                 VALUES ('$this->item_id', '$this->user_id', '$this->project_id', '$this->user2_id', '$this->post_id', '$this->type', '$this->activity', '$this->date_time')";
+    // $query = "INSERT INTO $this->table_name (item_id, user_id, project_id, user2_id, post_id, post_type, activity, date_time) 
+    //              VALUES ('$this->item_id', '$this->user_id', '$this->project_id', '$this->user2_id', '$this->post_id', '$this->type', '$this->activity', '$this->date_time')";
+    $query = "INSERT INTO $this->table_name (item_id, user_id, project_id, user2_id, post_id, post_type, date_time) 
+                 VALUES ('$this->item_id', '$this->user_id', '$this->project_id', '$this->user2_id', '$this->post_id', '$this->type', '$this->date_time')";
     $result = mysql_query($query);
 
     $err = mysql_error();
