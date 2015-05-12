@@ -83,7 +83,7 @@ function getNewPage($key,$pagenum){
   return json_decode($json,true);
 }
 
-$db_table = "feed_items_test2";
+$db_table = "feed_items_api";
 $api_safety_limit = 3;	  // Limit number of hits to API so my key doesn't get locked out
 $first_page = 1;          // Set this to values other than 1 for debug
 $page_num = $first_page;
@@ -113,10 +113,10 @@ echo "<html>
       $api_hit_cntr++;
 
       // Get a new page
-      $data = getNewPage($api_key_test,$page_num);	
-      if(!data){  // Probably means we hit the hackaday API limit
+      $data = getNewPage($api_key,$page_num);	
+      if(!$data){  // 404
         $file = 'errors.txt';
-        $message = "Error occurred at " . gmdate("Y-m-d H:i:s",time()) . ", page $page_num not processed.  Hit counter: $api_hit_cntr\r";
+        $message = "404 Error occurred at " . gmdate("Y-m-d H:i:s",time()) . ", page $page_num not processed.  Hit counter: $api_hit_cntr\r";
         echo $message;
         file_put_contents($file, $message, FILE_APPEND | LOCK_EX);
         return;
@@ -158,7 +158,7 @@ echo "<html>
           $dupl_cntr = 0; // If we get here, reset counter
 
           $item->print_to_screen();
-          $item->insert_into_table();
+          //$item->insert_into_table();
         }
       }
       

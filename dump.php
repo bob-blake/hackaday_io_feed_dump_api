@@ -114,9 +114,9 @@ $dbcnx = @mysql_select_db(DB_NAME);
 
       // Get a new page
       $data = getNewPage($api_key,$page_num);  
-      if(!data){  // Probably means we hit the hackaday API limit
+      if(!$data){  // // 404
         $file = 'errors.txt';
-        $message = "Error occurred at " . gmdate("Y-m-d H:i:s",time()) . ", page $page_num not processed.  Hit counter: $api_hit_cntr\r";
+        $message = "404 Error occurred at " . gmdate("Y-m-d H:i:s",time()) . ", page $page_num not processed.  Hit counter: $api_hit_cntr\r";
         //echo $message;
         file_put_contents($file, $message, FILE_APPEND | LOCK_EX);
         return;
