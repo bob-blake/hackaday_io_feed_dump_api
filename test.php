@@ -150,6 +150,7 @@ echo "<html>
             echo "Count: $count<br />";
             
             // Continue getting posts from the end
+            $page_num += floor(($count) / 50) - 1; 
             break;  // Move on to next page
           }
         }
