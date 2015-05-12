@@ -23,9 +23,8 @@ class feedItem
   public $type;
   public $activity;
   public $date_time;
-  public $is_duplicate;
 
-  public function __construct($feed_item_arr){
+  public function get_current($feed_item_arr){
     $this->item_id = $feed_item_arr["id"];
     $this->user_id = $feed_item_arr["user_id"];
     $this->project_id = $feed_item_arr["project_id"];
@@ -36,7 +35,7 @@ class feedItem
     $this->date_time = gmdate("Y-m-d H:i:s", $feed_item_arr["created"]);
     $this->is_duplicate = 0;
   }
-
+  
   public function is_duplicate(){
     $query = "SELECT * FROM feed_items_api WHERE item_id='$this->item_id'";
     $result = mysql_query($query);
@@ -60,15 +59,41 @@ class feedItem
     echo "Post Type: $this->type <br />";
     echo "Activity: $this->activity <br />";
     echo "Date/Time: $this->date_time <br />";
-    echo "Duplicate?: $this->is_duplicate <br />";
     echo "<br />";
+  }
+
+  // TODO: Test this function!
+  public function insert_into_table($table){
+    $query = "INSERT INTO $table (item_id, user_id, project_id, user2_id, post_id, post_type, activity, date_time) 
+                 VALUES ('$this->item_id', '$this->user_id', '$this->project_id', '$this->user2_id', '$this->post_id', '$this->type', '$this->activity', '$this->date_time')";
+
+    $result = mysql_query($query);
+
+    $err = mysql_error();
+    if($err){
+        $file = 'errors.txt';
+        file_put_contents($file, $err, FILE_APPEND | LOCK_EX);
+    }
   }
 }
 
+// Reads new page of feed items from Hackaday API
+// Returns array of items upon success, null if failed
+function getNewPage($key,$pagenum){
+  // get json data from api
+  $json = @file_get_contents("https://api.hackaday.io/v1/feeds/global?api_key=$key&page=$pagenum");  // Suppress errors that would stop execution
+  return json_decode($json,true);
+}
 
+$api_safety_limit = 2;	  // Limit number of hits to API so my key doesn't get locked out
+$first_page = 1;          // Set this to values other than 1 for debug
+$page_num = $first_page;
+$num_pages = $page_num;   // Ensure we always get at least one page
 
-$api_hits = 0;
-$new_cntr = 1;
+$api_hit_cntr = 0;
+$dupl_cntr = 0;
+
+$item = new feedItem();
 
 // This is deprecated, I know I know
 $server = mysql_connect(DB_HOST,DB_USER,DB_PASS);
@@ -79,100 +104,65 @@ echo "<html>
       <body>
         <p>";
 
-    $page = 1;
-    $num_pages = $page; // Ensure we always get at least one page
-    $dupl_cntr = 0;
+    while($page_num <= $num_pages){
 
-    while($page <= $num_pages){
-      // get json data from api
-      $json = @file_get_contents("https://api.hackaday.io/v1/feeds/global?api_key=$api_key&page=$page");  // Suppress errors that will stop execution
-      $data = json_decode($json,true);
-      $api_hits++;
-      echo "API hit# $api_hits!<br />";
-      if(!$data){ // Probably means I hit the API limit
+      // Make sure we're being polite before hitting the api again
+      if($api_hit_cntr >= $api_safety_limit){
+        echo "Reached safety limit!<br />";
+        return;
+      }
+      $api_hit_cntr++;
+
+      // Get a new page
+      $data = getNewPage($api_key,$page_num);	
+      if(!data){  // Probably means we hit the hackaday API limit
         $file = 'errors.txt';
-        $message = "Error occurred at " . gmdate("Y-m-d H:i:s",time()) . ", page $page not processed.\r";
+        $message = "Error occurred at " . gmdate("Y-m-d H:i:s",time()) . ", page $page_num not processed.  Hit counter: $api_hit_cntr\r";
         echo $message;
         file_put_contents($file, $message, FILE_APPEND | LOCK_EX);
         return;
       }
-      else if($api_hits > 50){
-        echo "Reached safety limit!<br />";
-        return;
-      }
 
-      echo "Page: $page<br />";
+      echo "API hit# $api_hit_cntr!<br />";
+      echo "Page: $page_num<br />";
      
       // Cycle through feed items on each page
       foreach($data["feeds"] as $feed_item){
          
-        // Put array data into variables for legibility
-        // $item_id = $feed_item["id"];
-        // $user_id = $feed_item["user_id"];
-        // $project_id = $feed_item["project_id"];
-        // $user2_id = $feed_item["user2_id"];
-        // $post_id = $feed_item["post_id"];
-        // $type = $feed_item["type"];
-        // $activity = $feed_item["activity"];
-        // $date_time = gmdate("Y-m-d H:i:s", $feed_item["created"]);
-        // $is_duplicate = 0;
-        $item = new feedItem($feed_item);
+        $item->get_current($feed_item);
 
-        // Mark duplicates
-        //if(is_duplicate($item_id)){
         if($item->is_duplicate()){
-          $is_duplicate = 1;
-          $dupl_cntr++;
-          if($dupl_cntr >= 50){ // 50 in a row probably means we've already gotten these items
-            $dupl_cntr = 0;
+
+          if($dupl_cntr < 50){
+            $dupl_cntr++;
+            continue; // Move on to next post
+          }
+          else{   // 50 in a row probably means we've already gotten these items, so try to get more data from the end
+            $dupl_cntr = 0;     // Reset counter
+
+            // Count all items in table
             $query = "SELECT COUNT(id) FROM feed_items_api";
             $result = mysql_query($query);
-            if(!$result)
+            if(!$result){
               echo mysql_error();
-
-            $count = mysql_result($result,0);   // Count all items in table
+            }
+            $count = mysql_result($result,0);   
             echo "Count: $count<br />";
-            $page = floor(($count) / 50) - 1; // Continue counting at the end
-            $page += $new_cntr;        // Just for now
-            break;
+            
+            // Continue getting posts from the end
+            break;  // Move on to next page
           }
-          continue;               // Don't insert duplicates
         }
 
-            
-         
         $dupl_cntr = 0; // If we get here, reset counter
 
-        // Output to screen for testing
-        // echo "Item ID: $item_id <br />";
-        // echo "User ID: $user_id <br />";
-        // echo "Project ID: $project_id <br />";
-        // echo "User2 ID: $user2_id <br />";
-        // echo "Post ID: $post_id <br />";
-        // echo "Post Type: $type <br />";
-        // echo "Activity: $activity <br />";
-        // echo "Date/Time: $date_time <br />";
-        // echo "Duplicate?: $is_duplicate <br />";
-        // echo "<br />";
-
         $item->print_to_screen();
-         
-         // Put data into database
-          // $query = "INSERT INTO feed_items_api (item_id, user_id, project_id, user2_id, post_id, post_type, activity, date_time, is_duplicate) 
-          //             VALUES ('$item_id', '$user_id', '$project_id', '$user2_id', '$post_id', '$type', '$activity', '$date_time', '$is_duplicate')";
-
-          // $result = mysql_query($query);
-
-          // $err = mysql_error();
-          // if($err){
-          //    $file = 'errors.txt';
-          //    file_put_contents($file, $err, FILE_APPEND | LOCK_EX);
-          // }
+        //$item->insert_into_table("feed_items_test");
+        //$item->insert_into_table("feed_items_api");
       }
       
       // Increment page
-      $page++;
-      $new_cntr++;  // Just for now
+      $page_num++;
       // Update num_pages to account for any new posts
       $num_pages = $data["last_page"];
    }
